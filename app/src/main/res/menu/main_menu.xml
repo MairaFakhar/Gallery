@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <item
+        android:id="@+id/menu_backup"
+        android:title="Backup Data" />
+    <item
+        android:id="@+id/menu_restore"
+        android:title="Restore Data" />
+    <item
+        android:id="@+id/menu_log"
+        android:title="Login / Logout" />
+</menu>

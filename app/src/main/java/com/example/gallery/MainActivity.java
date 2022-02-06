@@ -1,5 +1,6 @@
 package com.example.gallery;
 
+import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.app.ActivityCompat;
 
@@ -13,10 +14,14 @@ import android.graphics.Bitmap;
 import android.net.Uri;
 import android.os.Bundle;
 import android.provider.MediaStore;
+import android.view.Menu;
+import android.view.MenuInflater;
+import android.view.MenuItem;
 import android.view.View;
 import android.widget.Button;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
+import android.widget.Toast;
 
 public class MainActivity extends AppCompatActivity {
 
@@ -25,6 +30,33 @@ public class MainActivity extends AppCompatActivity {
     final int GALLERY_REQUEST = 666;
     LinearLayout ll;
     Uri imageUri;
+
+    @Override
+    public boolean onCreateOptionsMenu(Menu menu) {
+        MenuInflater inflater = getMenuInflater();
+        inflater.inflate(R.menu.main_menu, menu);
+        return super.onCreateOptionsMenu(menu);
+    }
+
+    @Override
+    public boolean onOptionsItemSelected(@NonNull MenuItem item) {
+        switch (item.getItemId())
+        {
+            case R.id.menu_backup:
+//                Intent intent = new Intent(MainActivity.this, Settings.class);
+//                intent.putExtra("city", CITY);
+//                intent.putExtra("temp_type", TEMP);
+//                startActivity(intent);
+                Toast.makeText(getApplicationContext(), "Backup selected", Toast.LENGTH_SHORT).show();
+                return true;
+            case R.id.menu_restore:
+                Toast.makeText(getApplicationContext(), "Restore selected", Toast.LENGTH_SHORT).show();
+            case R.id.menu_log:
+                Toast.makeText(getApplicationContext(), "Login/Logout selected", Toast.LENGTH_SHORT).show();
+            default:
+                return super.onOptionsItemSelected(item);
+        }
+    }
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
