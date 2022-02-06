@@ -1,76 +1,134 @@
 package com.example.gallery;
 
-import android.os.Bundle;
-
-import com.google.android.material.snackbar.Snackbar;
-
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.core.app.ActivityCompat;
 
+import android.Manifest;
+import android.app.Activity;
+import android.content.ClipData;
+import android.content.ContentValues;
+import android.content.Intent;
+import android.content.pm.PackageManager;
+import android.graphics.Bitmap;
+import android.net.Uri;
+import android.os.Bundle;
+import android.provider.MediaStore;
 import android.view.View;
-
-import androidx.navigation.NavController;
-import androidx.navigation.Navigation;
-import androidx.navigation.ui.AppBarConfiguration;
-import androidx.navigation.ui.NavigationUI;
-
-import com.example.gallery.databinding.ActivityMainBinding;
-
-import android.view.Menu;
-import android.view.MenuItem;
+import android.widget.Button;
+import android.widget.ImageView;
+import android.widget.LinearLayout;
 
 public class MainActivity extends AppCompatActivity {
 
-    private AppBarConfiguration appBarConfiguration;
-    private ActivityMainBinding binding;
+    final int permissioncode = 999;
+    final int CAMERA_REQUEST = 555;
+    final int GALLERY_REQUEST = 666;
+    LinearLayout ll;
+    Uri imageUri;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        setContentView(R.layout.activity_main);
 
-        binding = ActivityMainBinding.inflate(getLayoutInflater());
-        setContentView(binding.getRoot());
+        if(ActivityCompat.checkSelfPermission(
+                MainActivity.this, Manifest.permission.CAMERA)!= PackageManager.PERMISSION_GRANTED)
+        {
+            // ask permission
+            ActivityCompat.requestPermissions(
+                    MainActivity.this,
+                    new String[]{Manifest.permission.CAMERA} ,
+                    permissioncode);
+        }
 
-        setSupportActionBar(binding.toolbar);
+        if(ActivityCompat.checkSelfPermission(
+                MainActivity.this, Manifest.permission.WRITE_EXTERNAL_STORAGE)!= PackageManager.PERMISSION_GRANTED)
+        {
+            ActivityCompat.requestPermissions(
+                    MainActivity.this,
+                    new String[]{Manifest.permission.WRITE_EXTERNAL_STORAGE} ,
+                    permissioncode);
+        }
+        Button cameraButton = findViewById(R.id.camerabutton);
+        Button galleryButton = findViewById(R.id.buttongallery);
+        //imageView = findViewById(R.id.imageView);
+        ll = findViewById(R.id.ll);
 
-        NavController navController = Navigation.findNavController(this, R.id.nav_host_fragment_content_main);
-        appBarConfiguration = new AppBarConfiguration.Builder(navController.getGraph()).build();
-        NavigationUI.setupActionBarWithNavController(this, navController, appBarConfiguration);
 
-        binding.fab.setOnClickListener(new View.OnClickListener() {
+        galleryButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                Snackbar.make(view, "Replace with your own action", Snackbar.LENGTH_LONG)
-                        .setAction("Action", null).show();
+                Intent intent = new Intent();
+                intent.setType("image/*");
+                //intent.putExtra(Intent.EXTRA_ALLOW_MULTIPLE, true);
+                intent.setAction(Intent.ACTION_GET_CONTENT);
+                startActivityForResult(Intent.createChooser(intent,"Select My Picture"),
+                        GALLERY_REQUEST);
+
+            }
+        });
+
+
+        cameraButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                ContentValues values = new ContentValues();
+                //values.put(MediaStore.Images.Media.TITLE, "Test Photo Title");
+                // values.put(MediaStore.Images.Media.DESCRIPTION, "From your Camera");
+                //
+                imageUri = getContentResolver().insert( MediaStore.Images.Media.EXTERNAL_CONTENT_URI, values);
+                Intent intent = new Intent(MediaStore.ACTION_IMAGE_CAPTURE);
+                intent.putExtra(Intent.EXTRA_ALLOW_MULTIPLE, true);
+                intent.putExtra(MediaStore.EXTRA_OUTPUT, imageUri);
+                startActivityForResult(intent, CAMERA_REQUEST);
+
             }
         });
     }
 
     @Override
-    public boolean onCreateOptionsMenu(Menu menu) {
-        // Inflate the menu; this adds items to the action bar if it is present.
-        getMenuInflater().inflate(R.menu.menu_main, menu);
-        return true;
-    }
+    protected void onActivityResult(int requestCode, int resultCode, Intent i)
+    {
+        super.onActivityResult(requestCode,resultCode, i);
 
-    @Override
-    public boolean onOptionsItemSelected(MenuItem item) {
-        // Handle action bar item clicks here. The action bar will
-        // automatically handle clicks on the Home/Up button, so long
-        // as you specify a parent activity in AndroidManifest.xml.
-        int id = item.getItemId();
+        if (requestCode == CAMERA_REQUEST && resultCode == Activity.RESULT_OK)
+        {
+            Bitmap thumbnail;
 
-        //noinspection SimplifiableIfStatement
-        if (id == R.id.action_settings) {
-            return true;
+            try {
+                thumbnail = MediaStore.Images.Media.getBitmap(getContentResolver(), imageUri);
+                //imageView.setImageBitmap(thumbnail);
+                ImageView img= new ImageView(MainActivity.this);
+                img.setImageBitmap(thumbnail);
+                ll.addView(img);
+
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        }
+        if (requestCode == GALLERY_REQUEST && resultCode == RESULT_OK && null != i)
+        {
+            ClipData mClipData = i.getClipData();
+            if (i.getData() != null)
+            {
+                Uri selectedImage = i.getData();
+                Bitmap bitmap;
+                try {
+                    bitmap = MediaStore.Images.Media.getBitmap(this.getContentResolver(), selectedImage);
+                    //imageView.setImageBitmap(bitmap);
+                    ImageView img= new ImageView(MainActivity.this);
+                    img.setImageBitmap(bitmap);
+                    ll.addView(img);
+
+                }
+                catch (Exception e) {
+                    e.printStackTrace();
+                }
+            }
         }
 
-        return super.onOptionsItemSelected(item);
-    }
 
-    @Override
-    public boolean onSupportNavigateUp() {
-        NavController navController = Navigation.findNavController(this, R.id.nav_host_fragment_content_main);
-        return NavigationUI.navigateUp(navController, appBarConfiguration)
-                || super.onSupportNavigateUp();
+
+
     }
 }
