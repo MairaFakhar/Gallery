@@ -5,6 +5,7 @@ import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.app.ActivityCompat;
 
 import android.Manifest;
+import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.content.res.Resources;
 import android.database.Cursor;
@@ -20,7 +21,6 @@ import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.View;
 import android.widget.ImageButton;
-import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.TableRow;
 import android.widget.TextView;
@@ -28,7 +28,6 @@ import android.widget.Toast;
 
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.Collections;
 import java.util.Date;
 
@@ -137,11 +136,14 @@ public class MainActivity extends AppCompatActivity {
                 int space = (int)(Resources.getSystem().getDisplayMetrics().widthPixels / 3.2f);
                 tr.addView(img, space, space);
 
-                final int NUM = i;
+                final String path = pictures.get(i).getPath();
                 img.setOnClickListener(new View.OnClickListener() {
                     @Override
                     public void onClick(View v) {
-                        Toast.makeText(getApplicationContext(), "Image Number: "+NUM, Toast.LENGTH_SHORT).show();
+                        Toast.makeText(getApplicationContext(), path, Toast.LENGTH_SHORT).show();
+                        Intent i = new Intent(MainActivity.this, viewImage.class);
+                        i.putExtra("path", path);
+                        startActivity(i);
                     }
                 });
 
