@@ -10,6 +10,7 @@ import android.content.res.Resources;
 import android.database.Cursor;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
+import android.graphics.Color;
 import android.net.Uri;
 import android.os.Bundle;
 import android.os.Environment;
@@ -126,13 +127,24 @@ public class MainActivity extends AppCompatActivity {
             while (i < pictures.size() && date.equals(pictures.get(i).getDate()) && sameRow != 3)
             {
                 date = pictures.get(i).getDate();
-                ImageView img = new ImageView(getApplicationContext());
+                ImageButton img = new ImageButton(getApplicationContext());
                 BitmapFactory.Options bmOptions = new BitmapFactory.Options();
                 Bitmap bitmap = BitmapFactory.decodeFile(pictures.get(i).getPath(), bmOptions);
+                bitmap = Bitmap.createScaledBitmap(bitmap, 300, 400, true);
                 img.setImageBitmap(bitmap);
+                img.setBackgroundColor(Color.WHITE);
 
                 int space = (int)(Resources.getSystem().getDisplayMetrics().widthPixels / 3.2f);
                 tr.addView(img, space, space);
+
+                final int NUM = i;
+                img.setOnClickListener(new View.OnClickListener() {
+                    @Override
+                    public void onClick(View v) {
+                        Toast.makeText(getApplicationContext(), "Image Number: "+NUM, Toast.LENGTH_SHORT).show();
+                    }
+                });
+
                 i++;
                 sameRow++;
             }
