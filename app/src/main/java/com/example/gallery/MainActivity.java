@@ -11,13 +11,13 @@ import android.content.ContentValues;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.database.Cursor;
+import android.database.DefaultDatabaseErrorHandler;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.net.Uri;
 import android.os.Bundle;
 import android.os.Environment;
 import android.provider.MediaStore;
-import android.util.Log;
 import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
@@ -29,7 +29,11 @@ import android.widget.TableRow;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import org.w3c.dom.Text;
+
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Date;
 
 public class MainActivity extends AppCompatActivity {
 
@@ -115,23 +119,34 @@ public class MainActivity extends AppCompatActivity {
             }
         });
 
-        ArrayList<pictureFacer> a = getAllImagesByFolder("a");
-        for (int i = 0; i < a.size(); i++)
+        ArrayList<Picture> pictures = getAllImagesByFolder();
+        String date = "";
+
+        int i = 0;
+        int sameRow = 0;
+
+        while (i < pictures.size())
         {
             TableRow tr = new TableRow(getApplicationContext());
-
             TextView txt = new TextView(getApplicationContext());
-            txt.setText(a.get(i).getPicturePath());
-            txt.setMaxWidth(500);
+            txt.setText(pictures.get(i).getDate());
+            date = pictures.get(i).getDate();
             tr.addView(txt);
-
-            ImageView img = new ImageView(getApplicationContext());
-            BitmapFactory.Options bmOptions = new BitmapFactory.Options();
-            Bitmap bitmap = BitmapFactory.decodeFile(a.get(i).getPicturePath(),bmOptions);
-            img.setImageBitmap(bitmap);
-            tr.addView(img, 500, 500);
-
             ll.addView(tr);
+
+            tr = new TableRow(getApplicationContext());
+            while (i < pictures.size() && date.equals(pictures.get(i).getDate()) && sameRow != 3) {
+                date = pictures.get(i).getDate();
+                ImageView img = new ImageView(getApplicationContext());
+                BitmapFactory.Options bmOptions = new BitmapFactory.Options();
+                Bitmap bitmap = BitmapFactory.decodeFile(pictures.get(i).getPath(), bmOptions);
+                img.setImageBitmap(bitmap);
+                tr.addView(img, 350, 350);
+                i++;
+                sameRow++;
+            }
+            ll.addView(tr);
+            sameRow = 0;
         }
     }
 
@@ -233,31 +248,33 @@ public class MainActivity extends AppCompatActivity {
         return picFolders;
     }
 */
-    public ArrayList<pictureFacer> getAllImagesByFolder(String path){
-        path = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_PICTURES).getPath();
-        path = path+'/';
-        ArrayList<pictureFacer> images = new ArrayList<>();
+    public ArrayList<Picture> getAllImagesByFolder(){
+        String path = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_PICTURES).getPath() + '/';
+
+        ArrayList<Picture> images = new ArrayList<>();
         Uri allVideosuri = android.provider.MediaStore.Images.Media.EXTERNAL_CONTENT_URI;
-        String[] projection = { MediaStore.Images.ImageColumns.DATA ,MediaStore.Images.Media.DISPLAY_NAME,
-                MediaStore.Images.Media.SIZE};
+        String[] projection = {
+                MediaStore.Images.ImageColumns.DATA,
+                MediaStore.Images.Media.DISPLAY_NAME,
+                MediaStore.Images.Media.SIZE,
+                MediaStore.Images.Media.DATE_TAKEN };
         Cursor cursor = this.getContentResolver().query(allVideosuri, projection, MediaStore.Images.Media.DATA + " like ? ", new String[] {"%"+path+"%"}, null);
 
         try {
             cursor.moveToFirst();
             do {
-                pictureFacer pic = new pictureFacer();
+                Picture pic = new Picture();
 
-                pic.setPicturName(cursor.getString(cursor.getColumnIndexOrThrow(MediaStore.Images.Media.DISPLAY_NAME)));
-
-                pic.setPicturePath(cursor.getString(cursor.getColumnIndexOrThrow(MediaStore.Images.Media.DATA)));
-
-                pic.setPictureSize(cursor.getString(cursor.getColumnIndexOrThrow(MediaStore.Images.Media.SIZE)));
+                pic.setName(cursor.getString(cursor.getColumnIndexOrThrow(MediaStore.Images.Media.DISPLAY_NAME)));
+                pic.setPath(cursor.getString(cursor.getColumnIndexOrThrow(MediaStore.Images.Media.DATA)));
+                pic.setSize(cursor.getString(cursor.getColumnIndexOrThrow(MediaStore.Images.Media.SIZE)));
+                pic.setDate(cursor.getLong(cursor.getColumnIndexOrThrow(MediaStore.Images.Media.DATE_TAKEN)));
 
                 images.add(pic);
             } while(cursor.moveToNext());
 
             cursor.close();
-            ArrayList<pictureFacer> reSelection = new ArrayList<>();
+            ArrayList<Picture> reSelection = new ArrayList<>();
 
             for (int i = images.size()-1; i > -1; i--)
             {
@@ -272,64 +289,70 @@ public class MainActivity extends AppCompatActivity {
         return images;
     }
 
-    public class pictureFacer {
+    public class Picture {
 
-        private String picturName;
-        private String picturePath;
-        private  String pictureSize;
-        private  String imageUri;
-        private Boolean selected = false;
+        private String name;
+        private String path;
+        private String size;
+        private String uri;
+        private Long date;
 
-        public pictureFacer(){
+        public Picture(){
 
         }
 
-        public pictureFacer(String picturName, String picturePath, String pictureSize, String imageUri) {
-            this.picturName = picturName;
-            this.picturePath = picturePath;
-            this.pictureSize = pictureSize;
-            this.imageUri = imageUri;
+        public Picture(String pictureName, String picturePath, String pictureSize, String imageUri) {
+            this.name = pictureName;
+            this.path = picturePath;
+            this.size = pictureSize;
+            this.uri = imageUri;
         }
 
 
-        public String getPicturName() {
-            return picturName;
+        public String getName() {
+            return name;
         }
 
-        public void setPicturName(String picturName) {
-            this.picturName = picturName;
+        public void setName(String name) {
+            this.name = name;
         }
 
-        public String getPicturePath() {
-            return picturePath;
+        public String getPath() {
+            return path;
         }
 
-        public void setPicturePath(String picturePath) {
-            this.picturePath = picturePath;
+        public void setPath(String path) {
+            this.path = path;
         }
 
-        public String getPictureSize() {
-            return pictureSize;
+        public String getSize() {
+            return size;
         }
 
-        public void setPictureSize(String pictureSize) {
-            this.pictureSize = pictureSize;
+        public void setSize(String size) {
+            this.size = size;
         }
 
-        public String getImageUri() {
-            return imageUri;
+        public String getUri() {
+            return uri;
         }
 
-        public void setImageUri(String imageUri) {
-            this.imageUri = imageUri;
+        public void setUri(String uri) {
+            this.uri = uri;
         }
 
-        public Boolean getSelected() {
-            return selected;
+        public Long getDateTime() {
+            return date;
         }
 
-        public void setSelected(Boolean selected) {
-            this.selected = selected;
+        public String getDate() {
+            Date d = new Date(this.date);
+            SimpleDateFormat sd = new SimpleDateFormat("dd.MM.yyyy");
+            return sd.format(d);
+        }
+
+        public void setDate(Long date) {
+            this.date = date;
         }
     }
 }
