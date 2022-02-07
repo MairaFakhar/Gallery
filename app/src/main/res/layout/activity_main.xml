@@ -6,28 +6,6 @@
     android:layout_height="match_parent"
     tools:context=".MainActivity">
 
-    <Button
-        android:id="@+id/camerabutton"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_marginStart="156dp"
-        android:layout_marginTop="4dp"
-        android:text="Button"
-        style="@style/Widget.Material3.Button"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent" />
-
-    <Button
-        android:id="@+id/buttongallery"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="52dp"
-        android:layout_marginEnd="160dp"
-        android:text="Button"
-        style="@style/Widget.Material3.Button"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintTop_toTopOf="parent" />
-
     <ScrollView
         android:layout_width="0dp"
         android:layout_height="0dp"
@@ -40,27 +18,20 @@
         app:layout_constraintTop_toTopOf="parent">
 
         <TableLayout
-            android:id="@+id/ll"
+            android:id="@+id/gallery_ll"
             android:layout_width="match_parent"
-            android:layout_height="wrap_content">
-
-            <TableRow
-                android:layout_width="match_parent"
-                android:layout_height="match_parent" />
-
-            <TableRow
-                android:layout_width="match_parent"
-                android:layout_height="match_parent" />
-
-            <TableRow
-                android:layout_width="match_parent"
-                android:layout_height="match_parent" />
-
-            <TableRow
-                android:layout_width="match_parent"
-                android:layout_height="match_parent" />
-        </TableLayout>
+            android:layout_height="wrap_content"/>
     </ScrollView>
+
+    <ImageButton
+        android:id="@+id/sort_btn"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="30dp"
+        android:layout_marginTop="30dp"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent"
+        app:srcCompat="@android:drawable/ic_menu_sort_by_size" />
 
 </androidx.constraintlayout.widget.ConstraintLayout>
 

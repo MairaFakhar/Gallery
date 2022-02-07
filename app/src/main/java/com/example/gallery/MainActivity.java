@@ -5,13 +5,9 @@ import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.app.ActivityCompat;
 
 import android.Manifest;
-import android.app.Activity;
-import android.content.ClipData;
-import android.content.ContentValues;
-import android.content.Intent;
 import android.content.pm.PackageManager;
+import android.content.res.Resources;
 import android.database.Cursor;
-import android.database.DefaultDatabaseErrorHandler;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.net.Uri;
@@ -22,26 +18,22 @@ import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.View;
-import android.widget.Button;
+import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.TableRow;
 import android.widget.TextView;
 import android.widget.Toast;
 
-import org.w3c.dom.Text;
-
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
 import java.util.Date;
 
 public class MainActivity extends AppCompatActivity {
 
-    final int permissioncode = 999;
-    final int CAMERA_REQUEST = 555;
-    final int GALLERY_REQUEST = 666;
-    LinearLayout ll;
-    Uri imageUri;
+    LinearLayout linearLayout;
 
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
@@ -56,8 +48,8 @@ public class MainActivity extends AppCompatActivity {
         {
             case R.id.menu_backup:
 //                Intent intent = new Intent(MainActivity.this, Settings.class);
-//                intent.putExtra("city", CITY);
-//                intent.putExtra("temp_type", TEMP);
+//                intent.putExtra("name", pic_name);
+//                intent.putExtra("path", pic_path);
 //                startActivity(intent);
                 Toast.makeText(getApplicationContext(), "Backup selected", Toast.LENGTH_SHORT).show();
                 return true;
@@ -75,51 +67,40 @@ public class MainActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
-        if(ActivityCompat.checkSelfPermission(
-                MainActivity.this, Manifest.permission.READ_EXTERNAL_STORAGE)!= PackageManager.PERMISSION_GRANTED)
+        if(ActivityCompat.checkSelfPermission(MainActivity.this, Manifest.permission.READ_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED)
         {
-            ActivityCompat.requestPermissions(
-                    MainActivity.this,
-                    new String[]{Manifest.permission.READ_EXTERNAL_STORAGE} ,
-                    permissioncode);
+            ActivityCompat.requestPermissions(MainActivity.this, new String[]{
+                    Manifest.permission.READ_EXTERNAL_STORAGE},
+                    101);
         }
-        Button cameraButton = findViewById(R.id.camerabutton);
-        Button galleryButton = findViewById(R.id.buttongallery);
-        //imageView = findViewById(R.id.imageView);
-        ll = findViewById(R.id.ll);
 
+        showImages(false);
 
-        galleryButton.setOnClickListener(new View.OnClickListener() {
+        ImageButton sort_btn = findViewById(R.id.sort_btn);
+        sort_btn.setOnClickListener(new View.OnClickListener() {
+
+            boolean ascending = false;
+
             @Override
-            public void onClick(View view) {
-                Intent intent = new Intent();
-                intent.setType("image/*");
-                //intent.putExtra(Intent.EXTRA_ALLOW_MULTIPLE, true);
-                intent.setAction(Intent.ACTION_GET_CONTENT);
-                startActivityForResult(Intent.createChooser(intent,"Select My Picture"),
-                        GALLERY_REQUEST);
-
+            public void onClick(View v){
+                ascending = !ascending;
+                showImages(ascending);
             }
         });
+    }
 
-
-        cameraButton.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                ContentValues values = new ContentValues();
-                // values.put(MediaStore.Images.Media.TITLE, "Test Photo Title");
-                // values.put(MediaStore.Images.Media.DESCRIPTION, "From your Camera");
-                //
-                imageUri = getContentResolver().insert(MediaStore.Images.Media.EXTERNAL_CONTENT_URI, values);
-                Intent intent = new Intent(MediaStore.ACTION_IMAGE_CAPTURE);
-                intent.putExtra(Intent.EXTRA_ALLOW_MULTIPLE, true);
-                intent.putExtra(MediaStore.EXTRA_OUTPUT, imageUri);
-                startActivityForResult(intent, CAMERA_REQUEST);
-
-            }
-        });
+    void showImages(boolean ascending)
+    {
+        linearLayout = findViewById(R.id.gallery_ll);
+        linearLayout.removeAllViews();
 
         ArrayList<Picture> pictures = getAllImagesByFolder();
+
+        if (ascending)
+        {
+            Collections.reverse(pictures);
+        }
+
         String date = "";
 
         int i = 0;
@@ -127,70 +108,39 @@ public class MainActivity extends AppCompatActivity {
 
         while (i < pictures.size())
         {
-            TableRow tr = new TableRow(getApplicationContext());
-            TextView txt = new TextView(getApplicationContext());
-            txt.setText(pictures.get(i).getDate());
-            date = pictures.get(i).getDate();
-            tr.addView(txt);
-            ll.addView(tr);
+            TableRow tr;
+            if (!date.equals(pictures.get(i).getDate()))
+            {
+                tr = new TableRow(getApplicationContext());
+                tr.setPadding(0, 15, 0, 15);
+                TextView txt = new TextView(getApplicationContext());
+                txt.setText(pictures.get(i).getDate());
+                date = pictures.get(i).getDate();
+                tr.addView(txt);
+                linearLayout.addView(tr);
+            }
 
             tr = new TableRow(getApplicationContext());
-            while (i < pictures.size() && date.equals(pictures.get(i).getDate()) && sameRow != 3) {
+            tr.setPadding(0, 15, 0, 15);
+
+            while (i < pictures.size() && date.equals(pictures.get(i).getDate()) && sameRow != 3)
+            {
                 date = pictures.get(i).getDate();
                 ImageView img = new ImageView(getApplicationContext());
                 BitmapFactory.Options bmOptions = new BitmapFactory.Options();
                 Bitmap bitmap = BitmapFactory.decodeFile(pictures.get(i).getPath(), bmOptions);
                 img.setImageBitmap(bitmap);
-                tr.addView(img, 350, 350);
+
+                int space = (int)(Resources.getSystem().getDisplayMetrics().widthPixels / 3.2f);
+                tr.addView(img, space, space);
                 i++;
                 sameRow++;
             }
-            ll.addView(tr);
+            linearLayout.addView(tr);
             sameRow = 0;
         }
     }
 
-    @Override
-    protected void onActivityResult(int requestCode, int resultCode, Intent i)
-    {
-        super.onActivityResult(requestCode,resultCode, i);
-
-        if (requestCode == CAMERA_REQUEST && resultCode == Activity.RESULT_OK)
-        {
-            Bitmap thumbnail;
-
-            try {
-                thumbnail = MediaStore.Images.Media.getBitmap(getContentResolver(), imageUri);
-                //imageView.setImageBitmap(thumbnail);
-                ImageView img= new ImageView(MainActivity.this);
-                img.setImageBitmap(thumbnail);
-                ll.addView(img);
-
-            } catch (Exception e) {
-                e.printStackTrace();
-            }
-        }
-        if (requestCode == GALLERY_REQUEST && resultCode == RESULT_OK && null != i)
-        {
-            ClipData mClipData = i.getClipData();
-            if (i.getData() != null)
-            {
-                Uri selectedImage = i.getData();
-                Bitmap bitmap;
-                try {
-                    bitmap = MediaStore.Images.Media.getBitmap(this.getContentResolver(), selectedImage);
-                    //imageView.setImageBitmap(bitmap);
-                    ImageView img= new ImageView(MainActivity.this);
-                    img.setImageBitmap(bitmap);
-                    ll.addView(img);
-
-                }
-                catch (Exception e) {
-                    e.printStackTrace();
-                }
-            }
-        }
-    }
 /*
     private ArrayList<imageFolder> getPicturePaths(){
         ArrayList<imageFolder> picFolders = new ArrayList<>();
@@ -248,21 +198,24 @@ public class MainActivity extends AppCompatActivity {
         return picFolders;
     }
 */
-    public ArrayList<Picture> getAllImagesByFolder(){
+    public ArrayList<Picture> getAllImagesByFolder()
+    {
         String path = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_PICTURES).getPath() + '/';
 
         ArrayList<Picture> images = new ArrayList<>();
-        Uri allVideosuri = android.provider.MediaStore.Images.Media.EXTERNAL_CONTENT_URI;
+        Uri uri = android.provider.MediaStore.Images.Media.EXTERNAL_CONTENT_URI;
         String[] projection = {
                 MediaStore.Images.ImageColumns.DATA,
                 MediaStore.Images.Media.DISPLAY_NAME,
                 MediaStore.Images.Media.SIZE,
                 MediaStore.Images.Media.DATE_TAKEN };
-        Cursor cursor = this.getContentResolver().query(allVideosuri, projection, MediaStore.Images.Media.DATA + " like ? ", new String[] {"%"+path+"%"}, null);
+        Cursor cursor = this.getContentResolver().query(uri, projection, MediaStore.Images.Media.DATA + " like ? ", new String[] {"%"+path+"%"}, null);
 
-        try {
+        try
+        {
             cursor.moveToFirst();
-            do {
+            do
+            {
                 Picture pic = new Picture();
 
                 pic.setName(cursor.getString(cursor.getColumnIndexOrThrow(MediaStore.Images.Media.DISPLAY_NAME)));
@@ -271,7 +224,8 @@ public class MainActivity extends AppCompatActivity {
                 pic.setDate(cursor.getLong(cursor.getColumnIndexOrThrow(MediaStore.Images.Media.DATE_TAKEN)));
 
                 images.add(pic);
-            } while(cursor.moveToNext());
+            }
+            while(cursor.moveToNext());
 
             cursor.close();
             ArrayList<Picture> reSelection = new ArrayList<>();
@@ -282,7 +236,9 @@ public class MainActivity extends AppCompatActivity {
             }
             images = reSelection;
 
-        } catch (Exception e) {
+        }
+        catch (Exception e)
+        {
             e.printStackTrace();
         }
 
