@@ -1,0 +1,39 @@
+{
+  "project_info": {
+    "project_number": "730078135934",
+    "project_id": "gallery-backup-44588",
+    "storage_bucket": "gallery-backup-44588.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:730078135934:android:d46be40700fb28e632fa2f",
+        "android_client_info": {
+          "package_name": "com.example.gallery"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "730078135934-f1e6fvmgrlvir7nqkpuphr89lp578g9s.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAsEceswI66Unw9Nl5s3o9uZw0UBqxj5iY"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "730078135934-f1e6fvmgrlvir7nqkpuphr89lp578g9s.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
