@@ -46,16 +46,16 @@ public class MainActivity extends AppCompatActivity {
     public boolean onOptionsItemSelected(@NonNull MenuItem item) {
         switch (item.getItemId())
         {
-            case R.id.menu_backup:
+            case R.id.backup_menu:
 //                Intent intent = new Intent(MainActivity.this, Settings.class);
 //                intent.putExtra("name", pic_name);
 //                intent.putExtra("path", pic_path);
 //                startActivity(intent);
                 Toast.makeText(getApplicationContext(), "Backup selected", Toast.LENGTH_SHORT).show();
                 return true;
-            case R.id.menu_restore:
+            case R.id.restore_menu:
                 Toast.makeText(getApplicationContext(), "Restore selected", Toast.LENGTH_SHORT).show();
-            case R.id.menu_log:
+            case R.id.log_menu:
                 Toast.makeText(getApplicationContext(), "Login/Logout selected", Toast.LENGTH_SHORT).show();
             default:
                 return super.onOptionsItemSelected(item);
@@ -140,7 +140,6 @@ public class MainActivity extends AppCompatActivity {
                 img.setOnClickListener(new View.OnClickListener() {
                     @Override
                     public void onClick(View v) {
-                        Toast.makeText(getApplicationContext(), path, Toast.LENGTH_SHORT).show();
                         Intent i = new Intent(MainActivity.this, viewImage.class);
                         i.putExtra("path", path);
                         startActivity(i);

@@ -2,12 +2,12 @@
 <menu xmlns:android="http://schemas.android.com/apk/res/android">
 
     <item
-        android:id="@+id/menu_backup"
+        android:id="@+id/backup_menu"
         android:title="Backup Data" />
     <item
-        android:id="@+id/menu_restore"
+        android:id="@+id/restore_menu"
         android:title="Restore Data" />
     <item
-        android:id="@+id/menu_log"
+        android:id="@+id/log_menu"
         android:title="Login / Logout" />
 </menu>
