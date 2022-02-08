@@ -24,6 +24,7 @@ import android.view.MenuItem;
 import android.view.View;
 import android.widget.Button;
 import android.widget.ImageButton;
+import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.TableRow;
 import android.widget.TextView;
@@ -76,7 +77,9 @@ public class MainActivity extends AppCompatActivity {
         if(ActivityCompat.checkSelfPermission(MainActivity.this, Manifest.permission.READ_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED)
         {
             ActivityCompat.requestPermissions(MainActivity.this, new String[]{
-                    Manifest.permission.READ_EXTERNAL_STORAGE},
+                    Manifest.permission.READ_EXTERNAL_STORAGE,
+                    Manifest.permission.WRITE_EXTERNAL_STORAGE,
+                    Manifest.permission.MANAGE_EXTERNAL_STORAGE},
                     101);
         }
 
@@ -93,6 +96,13 @@ public class MainActivity extends AppCompatActivity {
                 showImages(ascending);
             }
         });
+    }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+
+        showImages(false);
     }
 
     void showImages(boolean ascending)
@@ -275,7 +285,7 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
-    //------------firebase-------------------
+    /*------------firebase-------------------
     // views for button
     private Button btnSelect, btnUpload;
 
@@ -463,4 +473,5 @@ public class MainActivity extends AppCompatActivity {
                             });
         }
     }
+    */
 }

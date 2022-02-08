@@ -4,6 +4,8 @@ import androidx.annotation.NonNull;
 import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 
+import android.app.Activity;
+import android.content.ContentResolver;
 import android.content.DialogInterface;
 import android.database.Cursor;
 import android.graphics.Bitmap;
@@ -15,10 +17,14 @@ import android.provider.MediaStore;
 import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
+import android.view.View;
+import android.widget.Button;
 import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import java.io.File;
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.util.ArrayList;
 
@@ -68,6 +74,26 @@ public class viewImage extends AppCompatActivity {
         Bitmap bitmap = BitmapFactory.decodeFile(path, bmOptions);
         picture_img.setImageBitmap(bitmap);
 
+        Button delete_btn = findViewById(R.id.delete_btn);
+        delete_btn.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                File file = new File(path);
+
+                final String where = MediaStore.MediaColumns.DATA + "=?";
+                final String[] selectionArgs = new String[]{
+                        file.getAbsolutePath()
+                };
+                final ContentResolver contentResolver = getContentResolver();
+                final Uri filesUri = MediaStore.Files.getContentUri("external");
+                contentResolver.delete(filesUri, where, selectionArgs);
+                if (file.exists()) {
+                     contentResolver.delete(filesUri, where, selectionArgs);
+                     file.delete();
+                }
+                finish();
+            }
+        });
     }
 
     private void CreateInfoDialogue()
