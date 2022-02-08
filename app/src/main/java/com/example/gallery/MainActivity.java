@@ -156,6 +156,7 @@ public class MainActivity extends AppCompatActivity {
                 date = pictures.get(i).getDate();
                 tr.addView(txt);
                 linearLayout.addView(tr);
+                txt.setTextColor(Color.parseColor("#49454F"));
             }
 
             tr = new TableRow(getApplicationContext());
@@ -169,7 +170,7 @@ public class MainActivity extends AppCompatActivity {
                 Bitmap bitmap = BitmapFactory.decodeFile(pictures.get(i).getPath(), bmOptions);
                 bitmap = Bitmap.createScaledBitmap(bitmap, 300, 400, true);
                 img.setImageBitmap(bitmap);
-                img.setBackgroundColor(Color.WHITE);
+                img.setBackgroundColor(Color.TRANSPARENT);
 
                 int space = (int)(Resources.getSystem().getDisplayMetrics().widthPixels / 3.2f);
                 tr.addView(img, space, space);
