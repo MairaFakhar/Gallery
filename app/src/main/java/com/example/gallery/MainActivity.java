@@ -134,7 +134,7 @@ public class MainActivity extends AppCompatActivity {
                 date = pictures.get(i).getDate();
                 tr.addView(txt);
                 linearLayout.addView(tr);
-                //txt.setTextColor(Color.WHITE);
+                txt.setTextColor(Color.parseColor("#49454F"));
             }
 
             tr = new TableRow(getApplicationContext());
