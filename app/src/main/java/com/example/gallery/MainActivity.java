@@ -6,6 +6,8 @@ import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.app.ActivityCompat;
 
 import android.Manifest;
+import android.content.Context;
+import android.content.ContextWrapper;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.content.res.Resources;
@@ -14,6 +16,7 @@ import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.Color;
 import android.graphics.drawable.ColorDrawable;
+import android.media.ExifInterface;
 import android.net.Uri;
 import android.os.Bundle;
 import android.os.Environment;
@@ -24,14 +27,18 @@ import android.view.MenuItem;
 import android.view.View;
 import android.widget.Button;
 import android.widget.ImageButton;
+import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.TableRow;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.google.android.material.snackbar.Snackbar;
 import com.google.firebase.storage.FirebaseStorage;
 import com.google.firebase.storage.StorageReference;
 
+import java.io.File;
+import java.io.IOException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -40,6 +47,7 @@ import java.util.Date;
 public class MainActivity extends AppCompatActivity {
 
     LinearLayout linearLayout;
+    boolean Vault_open = false;
 
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
@@ -52,17 +60,32 @@ public class MainActivity extends AppCompatActivity {
     public boolean onOptionsItemSelected(@NonNull MenuItem item) {
         switch (item.getItemId())
         {
-            case R.id.menu_backup:
+            case R.id.backup_menu:
 //                Intent intent = new Intent(MainActivity.this, Settings.class);
 //                intent.putExtra("name", pic_name);
 //                intent.putExtra("path", pic_path);
 //                startActivity(intent);
                 Toast.makeText(getApplicationContext(), "Backup selected", Toast.LENGTH_SHORT).show();
                 return true;
-            case R.id.menu_restore:
+            case R.id.restore_menu:
                 Toast.makeText(getApplicationContext(), "Restore selected", Toast.LENGTH_SHORT).show();
-            case R.id.menu_log:
+                return true;
+            case R.id.log_menu:
                 Toast.makeText(getApplicationContext(), "Login/Logout selected", Toast.LENGTH_SHORT).show();
+                return true;
+            case R.id.hidden_menu:
+                Toast.makeText(this, Vault_open+"", Toast.LENGTH_SHORT).show();
+                if (!Vault_open)
+                {
+                    Vault_open = true;
+                    showImages(false, getHiddenImages());
+                }
+                else
+                {
+                    Vault_open = false;
+                    showImages(false, getAllImagesByFolder());
+                }
+                return true;
             default:
                 return super.onOptionsItemSelected(item);
         }
@@ -76,11 +99,13 @@ public class MainActivity extends AppCompatActivity {
         if(ActivityCompat.checkSelfPermission(MainActivity.this, Manifest.permission.READ_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED)
         {
             ActivityCompat.requestPermissions(MainActivity.this, new String[]{
-                    Manifest.permission.READ_EXTERNAL_STORAGE},
+                    Manifest.permission.READ_EXTERNAL_STORAGE,
+                    Manifest.permission.WRITE_EXTERNAL_STORAGE,
+                    Manifest.permission.MANAGE_EXTERNAL_STORAGE},
                     101);
         }
 
-        showImages(false);
+        showImages(false, getAllImagesByFolder());
 
         ImageButton sort_btn = findViewById(R.id.sort_btn);
         sort_btn.setOnClickListener(new View.OnClickListener() {
@@ -90,17 +115,24 @@ public class MainActivity extends AppCompatActivity {
             @Override
             public void onClick(View v){
                 ascending = !ascending;
-                showImages(ascending);
+                showImages(ascending, getAllImagesByFolder());
             }
         });
     }
 
-    void showImages(boolean ascending)
+    @Override
+    protected void onResume() {
+        super.onResume();
+        Vault_open = false;
+        showImages(false, getAllImagesByFolder());
+    }
+
+    void showImages(boolean ascending, ArrayList<Picture> pictures)
     {
         linearLayout = findViewById(R.id.gallery_ll);
         linearLayout.removeAllViews();
 
-        ArrayList<Picture> pictures = getAllImagesByFolder();
+//        ArrayList<Picture> pictures = getAllImagesByFolder();
 
         if (ascending)
         {
@@ -124,6 +156,7 @@ public class MainActivity extends AppCompatActivity {
                 date = pictures.get(i).getDate();
                 tr.addView(txt);
                 linearLayout.addView(tr);
+                txt.setTextColor(Color.parseColor("#49454F"));
             }
 
             tr = new TableRow(getApplicationContext());
@@ -137,18 +170,21 @@ public class MainActivity extends AppCompatActivity {
                 Bitmap bitmap = BitmapFactory.decodeFile(pictures.get(i).getPath(), bmOptions);
                 bitmap = Bitmap.createScaledBitmap(bitmap, 300, 400, true);
                 img.setImageBitmap(bitmap);
-                img.setBackgroundColor(Color.WHITE);
+                img.setBackgroundColor(Color.TRANSPARENT);
 
                 int space = (int)(Resources.getSystem().getDisplayMetrics().widthPixels / 3.2f);
                 tr.addView(img, space, space);
 
-                final String path = pictures.get(i).getPath();
+                final String f_path = pictures.get(i).getPath();
+                final String f_name = pictures.get(i).getName();
+                final boolean f_hidden = Vault_open;
                 img.setOnClickListener(new View.OnClickListener() {
                     @Override
                     public void onClick(View v) {
-                        Toast.makeText(getApplicationContext(), path, Toast.LENGTH_SHORT).show();
                         Intent i = new Intent(MainActivity.this, viewImage.class);
-                        i.putExtra("path", path);
+                        i.putExtra("path", f_path);
+                        i.putExtra("name", f_name);
+                        i.putExtra("hidden", f_hidden);
                         startActivity(i);
                     }
                 });
@@ -206,6 +242,27 @@ public class MainActivity extends AppCompatActivity {
             e.printStackTrace();
         }
 
+        return images;
+    }
+
+    public ArrayList<Picture> getHiddenImages()
+    {
+        ContextWrapper cw = new ContextWrapper(getApplicationContext());
+        File directory = cw.getDir("hidden_images", Context.MODE_PRIVATE);
+
+        File[] files = directory.listFiles();
+        ArrayList<Picture> images = new ArrayList<>();
+
+        for (File file : files)
+        {
+                Picture p = new Picture();
+                p.name = file.getName();
+                p.path = file.getPath();
+                p.date = file.lastModified();
+                p.size = file.length()+"";
+
+                images.add(p);
+        }
         return images;
     }
 
@@ -276,7 +333,7 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
-    //------------firebase-------------------
+    /*------------firebase-------------------
     // views for button
     private Button btnSelect, btnUpload;
 
@@ -464,4 +521,5 @@ public class MainActivity extends AppCompatActivity {
                             });
         }
     }
+    */
 }
