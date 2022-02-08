@@ -6,6 +6,8 @@ import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.app.ActivityCompat;
 
 import android.Manifest;
+import android.content.Context;
+import android.content.ContextWrapper;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.content.res.Resources;
@@ -14,6 +16,7 @@ import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.Color;
 import android.graphics.drawable.ColorDrawable;
+import android.media.ExifInterface;
 import android.net.Uri;
 import android.os.Bundle;
 import android.os.Environment;
@@ -30,9 +33,12 @@ import android.widget.TableRow;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.google.android.material.snackbar.Snackbar;
 import com.google.firebase.storage.FirebaseStorage;
 import com.google.firebase.storage.StorageReference;
 
+import java.io.File;
+import java.io.IOException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -41,6 +47,7 @@ import java.util.Date;
 public class MainActivity extends AppCompatActivity {
 
     LinearLayout linearLayout;
+    boolean Vault_open = false;
 
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
@@ -62,8 +69,23 @@ public class MainActivity extends AppCompatActivity {
                 return true;
             case R.id.restore_menu:
                 Toast.makeText(getApplicationContext(), "Restore selected", Toast.LENGTH_SHORT).show();
+                return true;
             case R.id.log_menu:
                 Toast.makeText(getApplicationContext(), "Login/Logout selected", Toast.LENGTH_SHORT).show();
+                return true;
+            case R.id.hidden_menu:
+                Toast.makeText(this, Vault_open+"", Toast.LENGTH_SHORT).show();
+                if (!Vault_open)
+                {
+                    Vault_open = true;
+                    showImages(false, getHiddenImages());
+                }
+                else
+                {
+                    Vault_open = false;
+                    showImages(false, getAllImagesByFolder());
+                }
+                return true;
             default:
                 return super.onOptionsItemSelected(item);
         }
@@ -83,7 +105,7 @@ public class MainActivity extends AppCompatActivity {
                     101);
         }
 
-        showImages(false);
+        showImages(false, getAllImagesByFolder());
 
         ImageButton sort_btn = findViewById(R.id.sort_btn);
         sort_btn.setOnClickListener(new View.OnClickListener() {
@@ -93,7 +115,7 @@ public class MainActivity extends AppCompatActivity {
             @Override
             public void onClick(View v){
                 ascending = !ascending;
-                showImages(ascending);
+                showImages(ascending, getAllImagesByFolder());
             }
         });
     }
@@ -101,16 +123,16 @@ public class MainActivity extends AppCompatActivity {
     @Override
     protected void onResume() {
         super.onResume();
-
-        showImages(false);
+        Vault_open = false;
+        showImages(false, getAllImagesByFolder());
     }
 
-    void showImages(boolean ascending)
+    void showImages(boolean ascending, ArrayList<Picture> pictures)
     {
         linearLayout = findViewById(R.id.gallery_ll);
         linearLayout.removeAllViews();
 
-        ArrayList<Picture> pictures = getAllImagesByFolder();
+//        ArrayList<Picture> pictures = getAllImagesByFolder();
 
         if (ascending)
         {
@@ -152,12 +174,16 @@ public class MainActivity extends AppCompatActivity {
                 int space = (int)(Resources.getSystem().getDisplayMetrics().widthPixels / 3.2f);
                 tr.addView(img, space, space);
 
-                final String path = pictures.get(i).getPath();
+                final String f_path = pictures.get(i).getPath();
+                final String f_name = pictures.get(i).getName();
+                final boolean f_hidden = Vault_open;
                 img.setOnClickListener(new View.OnClickListener() {
                     @Override
                     public void onClick(View v) {
                         Intent i = new Intent(MainActivity.this, viewImage.class);
-                        i.putExtra("path", path);
+                        i.putExtra("path", f_path);
+                        i.putExtra("name", f_name);
+                        i.putExtra("hidden", f_hidden);
                         startActivity(i);
                     }
                 });
@@ -215,6 +241,27 @@ public class MainActivity extends AppCompatActivity {
             e.printStackTrace();
         }
 
+        return images;
+    }
+
+    public ArrayList<Picture> getHiddenImages()
+    {
+        ContextWrapper cw = new ContextWrapper(getApplicationContext());
+        File directory = cw.getDir("hidden_images", Context.MODE_PRIVATE);
+
+        File[] files = directory.listFiles();
+        ArrayList<Picture> images = new ArrayList<>();
+
+        for (File file : files)
+        {
+                Picture p = new Picture();
+                p.name = file.getName();
+                p.path = file.getPath();
+                p.date = file.lastModified();
+                p.size = file.length()+"";
+
+                images.add(p);
+        }
         return images;
     }
 

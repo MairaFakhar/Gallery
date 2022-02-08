@@ -10,4 +10,7 @@
     <item
         android:id="@+id/log_menu"
         android:title="Login / Logout" />
+    <item
+        android:id="@+id/hidden_menu"
+        android:title="Vault" />
 </menu>

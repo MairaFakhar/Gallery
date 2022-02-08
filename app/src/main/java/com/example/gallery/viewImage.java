@@ -6,13 +6,17 @@ import androidx.appcompat.app.AppCompatActivity;
 
 import android.app.Activity;
 import android.content.ContentResolver;
+import android.content.Context;
+import android.content.ContextWrapper;
 import android.content.DialogInterface;
+import android.content.Intent;
 import android.database.Cursor;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.media.ExifInterface;
 import android.net.Uri;
 import android.os.Bundle;
+import android.os.Environment;
 import android.provider.MediaStore;
 import android.view.Menu;
 import android.view.MenuInflater;
@@ -23,14 +27,23 @@ import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.google.android.material.snackbar.Snackbar;
+
+import org.json.JSONArray;
+import org.json.JSONObject;
+
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.util.ArrayList;
 
 public class viewImage extends AppCompatActivity {
 
     String path;
+    String name;
+    boolean hidden;
 
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
@@ -48,9 +61,16 @@ public class viewImage extends AppCompatActivity {
                 CreateInfoDialogue();
                 return true;
 
-//            case R.id.hide_menu:
-//                MoveToHiddenFolder();
-//                return true;
+            case R.id.hide_menu:
+                if (!hidden)
+                {
+                    MoveToHiddenFolder();
+                }
+                else
+                {
+                    Toast.makeText(getApplicationContext(), "Picture Already Hidden", Toast.LENGTH_SHORT).show();
+                }
+                return true;
 
             default:
                 return super.onOptionsItemSelected(item);
@@ -67,7 +87,10 @@ public class viewImage extends AppCompatActivity {
         if (b != null)
         {
             path = b.getString("path");
+            name = b.getString("name");
+            hidden = b.getBoolean("hidden");
         }
+        Toast.makeText(this, hidden+"", Toast.LENGTH_SHORT).show();
 
         ImageView picture_img = findViewById(R.id.picture_img);
         BitmapFactory.Options bmOptions = new BitmapFactory.Options();
@@ -78,20 +101,20 @@ public class viewImage extends AppCompatActivity {
         delete_btn.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                File file = new File(path);
+                DeleteImage();
+            }
+        });
 
-                final String where = MediaStore.MediaColumns.DATA + "=?";
-                final String[] selectionArgs = new String[]{
-                        file.getAbsolutePath()
-                };
-                final ContentResolver contentResolver = getContentResolver();
-                final Uri filesUri = MediaStore.Files.getContentUri("external");
-                contentResolver.delete(filesUri, where, selectionArgs);
-                if (file.exists()) {
-                     contentResolver.delete(filesUri, where, selectionArgs);
-                     file.delete();
-                }
-                finish();
+        Button share_btn = findViewById(R.id.share_btn);
+        share_btn.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                Uri uri = Uri.parse(path);
+                Intent shareIntent = new Intent();
+                shareIntent.setAction(Intent.ACTION_SEND);
+                shareIntent.putExtra(Intent.EXTRA_STREAM, uri);
+                shareIntent.setType("image/*");
+                startActivity(Intent.createChooser(shareIntent, "Share Image"));
             }
         });
     }
@@ -143,4 +166,67 @@ public class viewImage extends AppCompatActivity {
         String attribute = exif.getAttribute(tag);
         return ((attribute != null && !attribute.equals("")) ? attribute : "[No Info]");
     }
+
+    private void DeleteImage()
+    {
+        File file = new File(path);
+
+        final String where = MediaStore.MediaColumns.DATA + "=?";
+        final String[] selectionArgs = new String[]{
+                file.getAbsolutePath()
+        };
+        final ContentResolver contentResolver = getContentResolver();
+        final Uri filesUri = MediaStore.Files.getContentUri("external");
+        contentResolver.delete(filesUri, where, selectionArgs);
+        if (file.exists()) {
+            contentResolver.delete(filesUri, where, selectionArgs);
+            file.delete();
+        }
+        finish();
+    }
+
+    private void MoveToHiddenFolder()
+    {
+        ContextWrapper cw = new ContextWrapper(getApplicationContext());
+        File directory = cw.getDir("hidden_images", Context.MODE_PRIVATE);
+        File internal_path = new File(directory, name);
+
+        FileOutputStream fos = null;
+        try
+        {
+            fos = new FileOutputStream(internal_path);
+            BitmapFactory.Options bmOptions = new BitmapFactory.Options();
+            Bitmap bitmap = BitmapFactory.decodeFile(path, bmOptions);
+            bitmap.compress(Bitmap.CompressFormat.JPEG, 100, fos);
+        }
+        catch (Exception e)
+        {
+            e.printStackTrace();
+        }
+        finally
+        {
+            try {
+                fos.close();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
+
+        DeleteImage();
+    }
+
+//    private void ReadFromHidden()
+//    {
+//        try
+//        {
+//            File f = new File(path, name);
+//            Bitmap b = BitmapFactory.decodeStream(new FileInputStream(f));
+//            ImageView img = (ImageView)findViewById(R.id.imgPicker);
+//            img.setImageBitmap(b);
+//        }
+//        catch (FileNotFoundException e)
+//        {
+//            e.printStackTrace();
+//        }
+//    }
 }
